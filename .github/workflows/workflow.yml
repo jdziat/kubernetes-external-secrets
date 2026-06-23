@@ -30,14 +30,20 @@ jobs:
   test-e2e:
     runs-on: ubuntu-latest
     name: E2E
-    # The e2e suite needs a kind cluster + localstack and is being re-greened
-    # after the @kubernetes/client-node migration; non-blocking for now.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+      - name: Install kind
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+      - name: Install helm
+        uses: azure/setup-helm@v4
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
       - name: versions
         run: |
           kind version
           kubectl version --client
           helm version
-      - run: ./e2e/run-e2e-suite.sh
+      - name: Run e2e suite (kind + localstack)
+        run: ./e2e/run-e2e-suite.sh

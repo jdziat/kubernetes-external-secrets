@@ -32,7 +32,7 @@ RED='\e[35m'
 NC='\e[0m'
 BGREEN='\e[32m'
 
-K8S_VERSION=${K8S_VERSION:-v1.16.15}
+K8S_VERSION=${K8S_VERSION:-}
 KIND_CLUSTER_NAME="external-secrets-dev"
 REGISTRY=external-secrets
 
@@ -45,7 +45,7 @@ kind create cluster \
   ${KIND_LOGGING} \
   --name ${KIND_CLUSTER_NAME} \
   --config "${DIR}/kind.yaml" \
-  --image "kindest/node:${K8S_VERSION}"
+  ${K8S_VERSION:+--image "kindest/node:${K8S_VERSION}"}
 
 echo -e "${BGREEN}building external-secrets images${NC}"
 docker build -t external-secrets:test -f "$DIR/../Dockerfile" "$DIR/../"
@@ -90,10 +90,8 @@ kubectl create clusterrolebinding permissive-binding \
   --user=kubelet \
   --serviceaccount=default:external-secrets-e2e || true
 
-until kubectl get secret | grep -q ^external-secrets-e2e-token; do \
-  echo -e "waiting for api token"; \
-  sleep 3; \
-done
+# k8s 1.24+ no longer auto-creates a ServiceAccount token Secret; the e2e pod
+# receives a projected token automatically, so no wait is required here.
 
 echo -e "${BGREEN}Starting external-secrets e2e tests...${NC}"
 kubectl rollout status deploy/localstack
