@@ -45,8 +45,11 @@ describe('CRD', () => {
     })
       .then(() => { throw new Error('was not supposed to succeed') })
       .catch((err) => {
-        expect(err).to.not.equal(undefined)
-        expect(err.code === undefined ? true : err.code >= 400).to.equal(true)
+        // A genuine apiserver rejection is an ApiException carrying an HTTP status
+        // code. The sentinel Error thrown above has no numeric .code, so this fails
+        // (rather than silently passing) if the invalid manifest was wrongly accepted.
+        expect(err.code, `expected an HTTP rejection but got: ${err.message}`).to.be.a('number')
+        expect(err.code).to.be.at.least(400)
       })
   })
 })
