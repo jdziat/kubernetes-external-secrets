@@ -4,7 +4,8 @@
 FROM node:24-alpine AS builder
 ENV NODE_ENV=production
 WORKDIR /app
-COPY package*.json ./
+# Copy .npmrc so the build is pinned to the public npm registry (no internal mirror)
+COPY package*.json .npmrc ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
 # ---- runtime ----
