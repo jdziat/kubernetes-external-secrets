@@ -68,6 +68,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner
+        # Only meaningful when the build job actually pushed an image (GHCR creds present);
+        # skip on credential-less forks so the nightly does not fail pulling a missing tag.
+        if: env.GHCR_USERNAME != ''
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: ${{ needs.build.outputs.image }}:nightly
@@ -77,6 +80,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan results to GitHub Security tab
+        if: env.GHCR_USERNAME != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
