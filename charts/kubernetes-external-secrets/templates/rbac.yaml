@@ -1,9 +1,5 @@
 {{- if .Values.rbac.create -}}
-  {{- if semverCompare ">=1.17.0-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: rbac.authorization.k8s.io/v1
-  {{- else -}}
-apiVersion: rbac.authorization.k8s.io/v1beta1
-  {{- end }}
 kind: ClusterRole
 metadata:
   name: {{ include "kubernetes-external-secrets.fullname" . }}
@@ -33,11 +29,7 @@ rules:
   {{- toYaml .Values.customClusterRoles | nindent 2 }}
   {{- end }}
 ---
-{{ if semverCompare ">=1.17.0-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: rbac.authorization.k8s.io/v1
-{{- else -}}
-apiVersion: rbac.authorization.k8s.io/v1beta1
-{{- end }}
 kind: ClusterRoleBinding
 metadata:
   name: {{ include "kubernetes-external-secrets.fullname" . }}
@@ -54,12 +46,9 @@ subjects:
   - name: {{ template "kubernetes-external-secrets.serviceAccountName" . }}
     namespace: {{ .Release.Namespace | quote }}
     kind: ServiceAccount
+{{- if .Values.rbac.authDelegator }}
 ---
-{{ if semverCompare ">=1.17.0-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: rbac.authorization.k8s.io/v1
-{{- else -}}
-apiVersion: rbac.authorization.k8s.io/v1beta1
-{{- end }}
 kind: ClusterRoleBinding
 metadata:
   name: {{ include "kubernetes-external-secrets.fullname" . }}-auth
@@ -76,4 +65,5 @@ subjects:
 - name: {{ template "kubernetes-external-secrets.serviceAccountName" . }}
   namespace: {{ .Release.Namespace | quote }}
   kind: ServiceAccount
+{{- end }}
 {{- end -}}

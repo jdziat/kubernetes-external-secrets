@@ -113,6 +113,9 @@ envFrom: {}
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
+  # The controller does not serve an authenticating webhook, so the
+  # system:auth-delegator binding (TokenReview/SubjectAccessReview) is disabled by default.
+  authDelegator: false
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -149,27 +152,46 @@ dnsConfig: {}
 
 securityContext:
   runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
   # Required for use of IRSA, see https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html
   # fsGroup: 65534
 
-# A security context defines privilege and access control settings for a Pod or Container.
-# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-containerSecurityContext: {}
-  # allowPrivilegeEscalation: false
-  # privileged: false
+# Hardened container security context aligned with the 'restricted' Pod Security Standard.
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
 
 resources:
-  {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+livenessProbe:
+  httpGet:
+    path: /metrics
+    port: prometheus
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 3
+readinessProbe:
+  httpGet:
+    path: /metrics
+    port: prometheus
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
 
 nodeSelector: {}
 

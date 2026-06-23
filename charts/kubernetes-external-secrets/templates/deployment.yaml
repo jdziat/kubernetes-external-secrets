@@ -45,6 +45,14 @@ spec:
           - name: prometheus
             containerPort: {{ .Values.env.METRICS_PORT }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
@@ -73,8 +81,9 @@ spec:
           envFrom:
           {{- .Values.envFrom | toYaml | nindent 12 }}
           {{- end }}
-          {{- if or .Values.filesFromSecret .Values.extraVolumeMounts }}
           volumeMounts:
+          - name: tmp
+            mountPath: /tmp
           {{- if .Values.extraVolumeMounts }}
           {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
           {{- end }}
@@ -83,7 +92,6 @@ spec:
           - name: {{ $key }}
             mountPath: {{ $value.mountPath }}
             readOnly: true
-          {{- end }}
           {{- end }}
           {{- end }}
           {{- if .Values.containerSecurityContext }}
@@ -113,8 +121,9 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or .Values.filesFromSecret .Values.extraVolumes }}
       volumes:
+      - name: tmp
+        emptyDir: {}
       {{- if .Values.extraVolumes }}
       {{- toYaml .Values.extraVolumes | nindent 8 }}
       {{- end }}
@@ -123,6 +132,5 @@ spec:
       - name: {{ $key }}
         secret:
           secretName: {{ $value.secret }}
-      {{- end }}
       {{- end }}
       {{- end }}

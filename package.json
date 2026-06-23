@@ -21,9 +21,7 @@
   "keywords": [
     "kubernetes",
     "secrets",
-    "aws",
-    "alicloud",
-    "aliyun"
+    "aws"
   ],
   "author": "GoDaddy Operating Company, LLC",
   "license": "MIT",
