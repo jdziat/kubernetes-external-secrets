@@ -27,6 +27,15 @@ jobs:
         run: npm run coverage
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
+      - name: Assert lockfile uses only the public npm registry
+        run: |
+          bad=$(grep -oE '"resolved": *"https?://[^/]+' package-lock.json | grep -v 'https://registry.npmjs.org' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::package-lock.json references a non-public registry (expected only registry.npmjs.org):"
+            echo "$bad"
+            exit 1
+          fi
+          echo "OK: every resolved host in package-lock.json is registry.npmjs.org"
   test-e2e:
     runs-on: ubuntu-latest
     name: E2E
