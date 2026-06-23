@@ -4,12 +4,12 @@
 const AWS = require('aws-sdk')
 const clonedeep = require('lodash/cloneDeep')
 const merge = require('lodash/merge')
-const proxy = require('proxy-agent')
+const { ProxyAgent } = require('proxy-agent')
 
-if (process.env.HTTP_PROXY !== '') {
+if (process.env.HTTP_PROXY) {
   AWS.config.update({
     httpOptions: {
-      agent: proxy(process.env.HTTP_PROXY)
+      agent: new ProxyAgent()
     }
   })
 }

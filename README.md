@@ -247,6 +247,8 @@ spec:
 
 Kubernetes External Secrets supports templating in `ExternalSecret` using [lodash.template](https://lodash.com/docs/4.17.15#template).
 
+> Security note: `ExternalSecret` `template` content is compiled and executed with lodash templating inside the controller process. The ability to create or modify an `ExternalSecret` template is effectively code execution in the controller, so restrict who may create ExternalSecrets via RBAC. lodash is pinned to a patched release.
+
 Template is applied to all `ExternalSecret.template` sections of the manifest.
 Data retrieved from secure backend is available via the `data` variable.
 Additonal object `yaml` of instance of [js-yaml](https://github.com/nodeca/js-yaml) is available in `lodash` templates.
