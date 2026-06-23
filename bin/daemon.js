@@ -87,8 +87,26 @@ async function main () {
 
   logger.info('starting app')
   daemon.start()
-  metricsServer.start()
+  await metricsServer.start()
   logger.info('successfully started app')
+
+  let shuttingDown = false
+  const shutdown = async (signal) => {
+    if (shuttingDown) return
+    shuttingDown = true
+    logger.info('received %s, shutting down gracefully', signal)
+    try {
+      daemon.stop()
+      await metricsServer.stop()
+      logger.info('shutdown complete')
+      process.exit(0)
+    } catch (err) {
+      logger.error('error during shutdown: %s', err.message)
+      process.exit(1)
+    }
+  }
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
+  process.on('SIGINT', () => shutdown('SIGINT'))
 }
 
 main()
