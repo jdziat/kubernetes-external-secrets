@@ -76,8 +76,10 @@
       "bin/",
       "**/*.test.js"
     ],
-    "lines": 4,
-    "functions": 4,
+    "lines": 75,
+    "functions": 75,
+    "statements": 75,
+    "branches": 75,
     "all": true,
     "cache": false,
     "temp-directory": "./coverage/.nyc_output"
