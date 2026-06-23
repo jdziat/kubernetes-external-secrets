@@ -31,19 +31,15 @@ const {
 } = require('../config')
 
 async function main () {
-  logger.info('loading kube specs')
-  await kubeClient.loadSpec()
-  logger.info('successfully loaded kube specs')
-
-  kubeClient.addCustomResourceDefinition(customResourceManifest)
-
   try {
-    logger.info('verifiying CRD is installed')
-    await kubeClient
-      .apis[customResourceManifest.spec.group]
-      .v1[customResourceManifest.spec.names.plural].get()
+    logger.info('verifying CRD is installed')
+    await kubeClient.customObjects.listClusterCustomObject({
+      group: customResourceManifest.spec.group,
+      version: 'v1',
+      plural: customResourceManifest.spec.names.plural
+    })
   } catch (err) {
-    logger.error('CRD installation check failed, statusCode: %s', err.statusCode)
+    logger.error('CRD installation check failed, statusCode: %s', err.code)
     process.exit(1)
   }
 

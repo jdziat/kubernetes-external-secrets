@@ -12,8 +12,11 @@ FROM node:24-alpine AS runtime
 ENV NODE_ENV=production \
     NPM_CONFIG_LOGLEVEL=warn \
     METRICS_PORT=3001
-# dumb-init reaps zombies and forwards signals to the Node process (PID 1)
-RUN apk add --no-cache dumb-init
+# dumb-init reaps zombies and forwards signals to the Node process (PID 1).
+# Also remove the base image's bundled npm/npx: it is not needed at runtime
+# (the app runs `node bin/daemon.js`) and ships transitive CVEs scanners flag.
+RUN apk add --no-cache dumb-init \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 WORKDIR /app
 COPY --chown=node:node package*.json ./
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules

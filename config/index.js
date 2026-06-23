@@ -1,7 +1,6 @@
 'use strict'
 
-const kube = require('kubernetes-client')
-const KubeRequest = require('kubernetes-client/backends/request')
+const { KubeConfig, CoreV1Api, CustomObjectsApi, Watch } = require('@kubernetes/client-node')
 const pino = require('pino')
 const yaml = require('js-yaml')
 const fs = require('fs')
@@ -13,13 +12,16 @@ const SecretsManagerBackend = require('../lib/backends/secrets-manager-backend')
 const SystemManagerBackend = require('../lib/backends/system-manager-backend')
 
 // Get document, or throw exception on error
-// eslint-disable-next-line security/detect-non-literal-fs-filename
+
 const customResourceManifest = yaml.load(fs.readFileSync(path.resolve(__dirname, '../charts/kubernetes-external-secrets/crds/kubernetes-client.io_externalsecrets_crd.yaml'), 'utf8'))
 
-const kubeconfig = new kube.KubeConfig()
+const kubeconfig = new KubeConfig()
 kubeconfig.loadFromDefault()
-const kubeBackend = new KubeRequest({ kubeconfig })
-const kubeClient = new kube.Client({ backend: kubeBackend })
+const kubeClient = {
+  core: kubeconfig.makeApiClient(CoreV1Api),
+  customObjects: kubeconfig.makeApiClient(CustomObjectsApi),
+  watch: new Watch(kubeconfig)
+}
 
 const logger = pino({
   serializers: {
