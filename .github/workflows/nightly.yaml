@@ -71,7 +71,7 @@ jobs:
         # Only meaningful when the build job actually pushed an image (GHCR creds present);
         # skip on credential-less forks so the nightly does not fail pulling a missing tag.
         if: env.GHCR_USERNAME != ''
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: ${{ needs.build.outputs.image }}:nightly
           format: 'sarif'
