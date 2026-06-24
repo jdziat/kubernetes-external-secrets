@@ -1,5 +1,6 @@
 'use strict'
 
+const { randomBytes } = require('crypto')
 const {
   kubeClient,
   customResourceManifest
@@ -19,7 +20,7 @@ async function delay (ms) {
 /**
  * generate a uuid for this e2e run
  */
-const uuid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+const uuid = randomBytes(16).toString('hex')
 
 /**
  * Create an ExternalSecret custom resource in a namespace.
