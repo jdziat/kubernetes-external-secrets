@@ -1,10 +1,4 @@
 /* eslint-env mocha */
 'use strict'
 
-const {
-  kubeClient
-} = require('../../config')
-
-before(async () => {
-  await kubeClient.loadSpec()
-})
+// No global setup needed: @kubernetes/client-node builds its clients eagerly.

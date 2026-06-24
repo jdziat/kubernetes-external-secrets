@@ -1,9 +1,8 @@
 'use strict'
 
-/* eslint-disable no-process-env */
-
 const environment = process.env.NODE_ENV
-  ? process.env.NODE_ENV.toLowerCase() : 'development'
+  ? process.env.NODE_ENV.toLowerCase()
+  : 'development'
 
 // Validate environment
 const validEnvironments = new Set(['development', 'test', 'production'])
@@ -20,15 +19,9 @@ if (environment === 'development') {
 // This is needed in case there is more than a KES controller instances within the cluster.
 const instanceId = process.env.INSTANCE_ID || ''
 
-const vaultEndpoint = process.env.VAULT_ADDR || 'http://127.0.0.1:8200'
-// Grab the vault namespace from the environment
-const vaultNamespace = process.env.VAULT_NAMESPACE || null
-const vaultTokenRenewThreshold = process.env.VAULT_TOKEN_RENEW_THRESHOLD || null
-const defaultVaultMountPoint = process.env.DEFAULT_VAULT_MOUNT_POINT || null
-const defaultVaultRole = process.env.DEFAULT_VAULT_ROLE || null
-
 const pollerIntervalMilliseconds = process.env.POLLER_INTERVAL_MILLISECONDS
-  ? Number(process.env.POLLER_INTERVAL_MILLISECONDS) : 10000
+  ? Number(process.env.POLLER_INTERVAL_MILLISECONDS)
+  : 10000
 
 const logLevel = process.env.LOG_LEVEL || 'info'
 const os = require('os')
@@ -61,11 +54,6 @@ watchedNamespaces = watchedNamespaces
 
 module.exports = {
   instanceId,
-  vaultEndpoint,
-  vaultNamespace,
-  vaultTokenRenewThreshold,
-  defaultVaultMountPoint,
-  defaultVaultRole,
   environment,
   pollerIntervalMilliseconds,
   metricsPort,

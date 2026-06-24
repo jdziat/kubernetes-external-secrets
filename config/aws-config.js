@@ -1,17 +1,19 @@
 'use strict'
 
-/* eslint-disable no-process-env */
-const AWS = require('aws-sdk')
+const { SecretsManager } = require('@aws-sdk/client-secrets-manager')
+const { SSM } = require('@aws-sdk/client-ssm')
+const { fromTemporaryCredentials } = require('@aws-sdk/credential-providers')
+const { NodeHttpHandler } = require('@smithy/node-http-handler')
+const { ProxyAgent } = require('proxy-agent')
 const clonedeep = require('lodash/cloneDeep')
 const merge = require('lodash/merge')
-const proxy = require('proxy-agent')
 
-if (process.env.HTTP_PROXY !== '') {
-  AWS.config.update({
-    httpOptions: {
-      agent: proxy(process.env.HTTP_PROXY)
-    }
-  })
+// AWS SDK v3 has no global config; an outbound proxy is configured per-client via
+// a custom requestHandler. ProxyAgent resolves HTTP(S)_PROXY/NO_PROXY from the env.
+let requestHandler
+if (process.env.HTTP_PROXY || process.env.HTTPS_PROXY) {
+  const agent = new ProxyAgent()
+  requestHandler = new NodeHttpHandler({ httpAgent: agent, httpsAgent: agent })
 }
 
 const localstack = process.env.LOCALSTACK || 0
@@ -25,8 +27,7 @@ const smEndpoint = process.env.AWS_SM_ENDPOINT || 0
 let secretsManagerConfig = {}
 let systemManagerConfig = {}
 let stsConfig = {
-  region: process.env.AWS_REGION || 'us-west-2',
-  stsRegionalEndpoints: process.env.AWS_STS_ENDPOINT_TYPE || 'regional'
+  region: process.env.AWS_REGION || 'us-west-2'
 }
 
 if (smEndpoint) {
@@ -56,31 +57,41 @@ if (localstack) {
   }
 }
 
-const intermediateCredentials = intermediateRole ? new AWS.ChainableTemporaryCredentials({
-  params: {
-    RoleArn: intermediateRole
-  },
-  stsConfig
-}) : null
+// Optional intermediate role assumed (chained) before the final role.
+const intermediateCredentials = intermediateRole
+  ? fromTemporaryCredentials({
+    params: {
+      RoleArn: intermediateRole,
+      RoleSessionName: 'k8s-external-secrets'
+    },
+    clientConfig: stsConfig
+  })
+  : undefined
+
+function withRequestHandler (config) {
+  return requestHandler ? { ...config, requestHandler } : config
+}
 
 module.exports = {
   secretsManagerFactory: (opts = {}) => {
+    let config = opts
     if (localstack) {
-      opts = merge(clonedeep(opts), secretsManagerConfig)
+      config = merge(clonedeep(opts), secretsManagerConfig)
     }
-    return new AWS.SecretsManager(opts)
+    return new SecretsManager(withRequestHandler(config))
   },
   systemManagerFactory: (opts = {}) => {
+    let config = opts
     if (localstack) {
-      opts = merge(clonedeep(opts), systemManagerConfig)
+      config = merge(clonedeep(opts), systemManagerConfig)
     }
-    return new AWS.SSM(opts)
+    return new SSM(withRequestHandler(config))
   },
   assumeRole: (assumeRoleOpts) => {
-    return new AWS.ChainableTemporaryCredentials({
+    return fromTemporaryCredentials({
       params: assumeRoleOpts,
       masterCredentials: intermediateCredentials,
-      stsConfig
+      clientConfig: stsConfig
     })
   }
 }

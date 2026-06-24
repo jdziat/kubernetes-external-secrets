@@ -1,0 +1,11 @@
+# Build context ignore for the e2e test-runner image (e2e/Dockerfile).
+# BuildKit prefers this over the root .dockerignore, so \-- unlike the production
+# image \-- the e2e/ tests, charts (CRD), lib, config and bin are all included.
+.git
+node_modules
+coverage
+.nyc_output
+.codex-dispatch
+*.log
+.env
+.env.*

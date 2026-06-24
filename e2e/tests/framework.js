@@ -1,8 +1,12 @@
 'use strict'
 
 const {
-  kubeClient
+  kubeClient,
+  customResourceManifest
 } = require('../../config')
+
+const group = customResourceManifest.spec.group
+const plural = customResourceManifest.spec.names.plural
 
 /**
  * "delays" the async execution
@@ -14,25 +18,28 @@ async function delay (ms) {
 
 /**
  * generate a uuid for this e2e run
- * taken from https://gist.github.com/6174/6062387
  */
 const uuid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 
 /**
- * wait for a secret to appear in a given namespace
- * this function polls the apiserver for updates in 100ms intervals (max 3s)
+ * Create an ExternalSecret custom resource in a namespace.
+ * @param {String} namespace
+ * @param {Object} body - the ExternalSecret manifest
+ * @returns {Promise<Object>} the created object
+ */
+const createExternalSecret = (namespace, body) =>
+  kubeClient.customObjects.createNamespacedCustomObject({ group, version: 'v1', namespace, plural, body })
+
+/**
+ * wait for a secret to appear in a given namespace (polls up to ~3s)
  * @param {String} ns - namespace
  * @param {String} name - secret name
- * @return {Secret|undefined}
+ * @return {Object|undefined} the Secret object (or undefined if it never appears)
  */
 const waitForSecret = async (ns, name) => {
   for (let i = 0; i <= 30; i++) {
     try {
-      const secret = await kubeClient
-        .api.v1
-        .namespaces(ns)
-        .secrets(name).get()
-      return secret
+      return await kubeClient.core.readNamespacedSecret({ name, namespace: ns })
     } catch (e) {
       await delay(100)
     }
@@ -42,5 +49,6 @@ const waitForSecret = async (ns, name) => {
 module.exports = {
   uuid,
   delay,
+  createExternalSecret,
   waitForSecret
 }

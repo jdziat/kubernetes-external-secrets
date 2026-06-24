@@ -1,9 +1,9 @@
-FROM node:14-alpine3.14
+FROM node:24-alpine
 
 # Setup source directory
 RUN mkdir /app
 WORKDIR /app
-COPY package.json package-lock.json /app/
+COPY package.json package-lock.json .npmrc /app/
 RUN npm ci
 
 # Copy app to source directory
