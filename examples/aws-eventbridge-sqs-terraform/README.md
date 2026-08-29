@@ -47,8 +47,12 @@ Silent event-flow failure is the failure mode to watch: the controller keeps
 running and the fallback poller masks a stall for up to an hour. Included:
 
 - A queue-age alarm per cluster (`ApproximateAgeOfOldestMessage > 10m`) —
-  fires when events arrive but nothing consumes them. Pair it with the
-  controller's `kubernetes_external_secrets_sqs_consumer_running` gauge.
+  fires when events arrive but nothing consumes them. Note that queue
+  retention is one hour, so once the backlog expires the metric decays and
+  the alarm can auto-resolve while the consumer is still down — always pair
+  it with an alert on the controller's
+  `kubernetes_external_secrets_sqs_consumer_running` gauge, which stays 0 for
+  as long as the consumer is dead.
 - A DLQ alarm per cluster — fires when messages dead-letter after five
   failed deliveries.
 
@@ -62,5 +66,10 @@ Wire both to `alarm_actions`.
   missed or older events, so longer retention adds nothing.
 - The event carries the secret's friendly name and ARN but never the secret
   value; the controller fetches the value itself via `GetSecretValue`.
+- Every cluster's queue receives events for **all** label changes in the
+  account/region, so each cluster's controller sees the names and ARNs of
+  secrets belonging to other clusters (values never leave AWS). If that
+  metadata crossing cluster boundaries matters to you, add a
+  `detail.name` prefix filter per rule/queue instead of one shared topic.
 - `.terraform.lock.hcl` is tracked for reference; when this directory is used
   as a called module, the root module's lock file is what Terraform honors.

@@ -10,7 +10,6 @@ data "aws_iam_policy_document" "consumer" {
     actions = [
       "sqs:ReceiveMessage",
       "sqs:DeleteMessage",
-      "sqs:GetQueueAttributes",
     ]
     resources = [aws_sqs_queue.cluster[each.key].arn]
   }

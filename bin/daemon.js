@@ -14,6 +14,7 @@ const Metrics = require('../lib/metrics')
 const { getExternalSecretEvents } = require('../lib/external-secret')
 const PollerFactory = require('../lib/poller-factory')
 const SqsConsumer = require('../lib/sqs-consumer')
+const { regionFromSqsQueueUrl } = require('../lib/utils')
 
 const {
   awsConfig,
@@ -87,9 +88,12 @@ async function main () {
 
   let sqsConsumer = null
   if (awsSqsQueueUrl) {
+    // Talk to the queue's own region even if AWS_REGION points elsewhere;
+    // URLs without a derivable region (e.g. LocalStack) use the default.
+    const queueRegion = regionFromSqsQueueUrl(awsSqsQueueUrl)
     sqsConsumer = new SqsConsumer({
       queueUrl: awsSqsQueueUrl,
-      sqsClient: awsConfig.sqsFactory(),
+      sqsClient: awsConfig.sqsFactory(queueRegion ? { region: queueRegion } : {}),
       daemon,
       logger,
       metrics,

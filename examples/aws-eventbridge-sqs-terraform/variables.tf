@@ -1,6 +1,13 @@
 variable "cluster_names" {
-  description = "Kubernetes cluster names; one SQS queue is created per cluster."
+  description = "Kubernetes cluster names; one SQS queue is created per cluster. Duplicates are collapsed."
   type        = list(string)
+
+  validation {
+    # 80-char SQS queue name cap minus the default prefix, separator and
+    # "-dlq" suffix leaves 57 chars for the cluster name.
+    condition     = alltrue([for name in var.cluster_names : can(regex("^[a-zA-Z0-9_-]{1,57}$", name))])
+    error_message = "Cluster names must be 1-57 chars of [a-zA-Z0-9_-] so derived SQS queue names stay within the 80-char limit."
+  }
 }
 
 variable "name_prefix" {

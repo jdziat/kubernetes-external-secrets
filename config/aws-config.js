@@ -101,9 +101,10 @@ module.exports = {
     return new SSM(withRequestHandler(config))
   },
   sqsFactory: (opts = {}) => {
-    // Unlike the sm/ssm factories, sqsConfig always applies (it carries the
-    // region default), matching how stsConfig is always used.
-    const config = merge(clonedeep(opts), sqsConfig)
+    // Unlike the sm/ssm factories, sqsConfig always applies as the base (it
+    // carries the region default), but caller opts win — e.g. a region
+    // derived from the queue URL must override AWS_REGION.
+    const config = merge(clonedeep(sqsConfig), opts)
     return new SQS(withRequestHandler(config))
   },
   assumeRole: (assumeRoleOpts) => {

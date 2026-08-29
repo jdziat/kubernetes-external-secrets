@@ -3,6 +3,7 @@ resource "aws_sqs_queue" "dlq" {
 
   name                      = "${var.name_prefix}-${each.key}-dlq"
   message_retention_seconds = 1209600 # 14 days
+  sqs_managed_sse_enabled   = true
   tags                      = var.tags
 }
 
@@ -14,6 +15,7 @@ resource "aws_sqs_queue" "cluster" {
   # The controller's fallback poller covers missed events, so long retention
   # adds nothing.
   message_retention_seconds = 3600
+  sqs_managed_sse_enabled   = true
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.dlq[each.key].arn

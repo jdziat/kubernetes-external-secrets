@@ -1014,7 +1014,7 @@ The controller's IAM role (e.g. via IRSA) needs:
   "Version": "2012-10-17",
   "Statement": [{
     "Effect": "Allow",
-    "Action": ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"],
+    "Action": ["sqs:ReceiveMessage", "sqs:DeleteMessage"],
     "Resource": "arn:aws:sqs:<region>:<account>:<queue-name>"
   }]
 }
