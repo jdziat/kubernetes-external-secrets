@@ -88,6 +88,7 @@ Optionally configure custom endpoints using environment variables
  - [AWS_SM_ENDPOINT](https://docs.aws.amazon.com/general/latest/gr/asm.html) - Useful to set endpoints for FIPS compliance.
  - [AWS_STS_ENDPOINT](https://docs.aws.amazon.com/general/latest/gr/sts.html) - Useful to set endpoints for FIPS compliance or regional latency.
  - [AWS_SSM_ENDPOINT](https://docs.aws.amazon.com/general/latest/gr/ssm.html) - Useful to set endpoints for FIPS compliance or custom VPC endpoint.
+ - [AWS_SQS_ENDPOINT](https://docs.aws.amazon.com/general/latest/gr/sqs-service.html) - Custom SQS endpoint for event-driven sync (FIPS or VPC endpoint).
 
 ##### Using AWS access credentials
 
@@ -986,6 +987,56 @@ AWS Secrets Manager is a notable exception to this. If you create/update a secre
 
 Note that `SecretBinary` parameter is not available when using the AWS Secrets Manager console. For any binary secrets (represented by a base64-encoded strings) created/updated via the AWS console, or stored in key-value pairs instead of text strings, you can just use the `isBinary` field explicitly as above.
 
+## Event-driven sync (AWS Secrets Manager + EventBridge + SQS)
+
+By default the controller polls every backend secret every `POLLER_INTERVAL_MILLISECONDS` (10s), which for AWS Secrets Manager means constant `GetSecretValue` calls billed per request. Event-driven sync replaces the fast poll with change notifications:
+
+```
+Secrets Manager "Secret Label Updated" event (AWSCURRENT moved to a new version)
+  → EventBridge rule → SNS topic → per-cluster SQS queue
+    → controller long-polls its queue → immediate re-sync of matching ExternalSecrets
+```
+
+The [`Secret Label Updated` native event](https://docs.aws.amazon.com/secretsmanager/latest/userguide/secret-event-notifications.html) fires whenever the active secret value changes — manual `PutSecretValue`/`UpdateSecret` and completed rotations alike — is enabled by default for all secrets, and needs no CloudTrail trail. (The consumer also understands CloudTrail-derived EventBridge events, should you route those instead.)
+
+Enable it by setting `AWS_SQS_QUEUE_URL` on the controller. A ready-made Terraform stack for the AWS side (EventBridge rule, SNS topic, one queue + DLQ per cluster, per-cluster IAM policies) lives in [`examples/aws-eventbridge-sqs-terraform`](examples/aws-eventbridge-sqs-terraform).
+
+| Env var                     | Description                                                                | Default |
+| --------------------------- | -------------------------------------------------------------------------- | ------- |
+| `AWS_SQS_QUEUE_URL`         | SQS queue to long-poll for Secrets Manager change events; enables the feature when set | unset |
+| `AWS_SQS_WAIT_TIME_SECONDS` | Long-poll wait time per `ReceiveMessage` call                              | `20`    |
+| `AWS_SQS_ENDPOINT`          | Custom SQS endpoint (FIPS / VPC endpoint)                                  | unset   |
+
+The controller's IAM role (e.g. via IRSA) needs:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"],
+    "Resource": "arn:aws:sqs:<region>:<account>:<queue-name>"
+  }]
+}
+```
+
+**Keep the poller as a fallback.** Events can be delayed or, rarely, missed, and they say nothing about changes made while the controller was down. Instead of `DISABLE_POLLING`, raise the interval so the poller becomes a cheap reconcile loop:
+
+```yaml
+env:
+  AWS_SQS_QUEUE_URL: "https://sqs.us-west-2.amazonaws.com/123456789012/kes-secrets-events-mycluster"
+  POLLER_INTERVAL_MILLISECONDS: "3600000"  # hourly reconcile; events handle freshness
+```
+
+Notes on matching semantics:
+
+- Events are matched to ExternalSecrets by secret **name** (the ARN's random `-XXXXXX` suffix is handled), ignoring region and account. A same-named secret elsewhere may cause a spurious re-sync; it fetches identical data and writes nothing, so this errs toward freshness.
+- Entries pinned with `versionId` are never event-synced — a change event cannot alter what a pinned version resolves to.
+- Only `secretsManager` backend ExternalSecrets participate; other backends are unaffected.
+- Deleting or restoring a secret publishes no native event; the fallback poller reconciles those changes.
+- With more than one controller replica, SQS splits messages across replicas (each event is delivered to only one). The chart already documents that multiple replicas are unsupported; the fallback poller covers the gap regardless.
+- Alert on `kubernetes_external_secrets_sqs_consumer_running == 0` (and the Terraform example's queue-age alarm): if the consumer loop dies the controller keeps running and the fallback poll silently masks the gap for up to an interval.
+
 ## Metrics
 
 kubernetes-external-secrets exposes the following metrics over a prometheus endpoint:
@@ -994,6 +1045,10 @@ kubernetes-external-secrets exposes the following metrics over a prometheus endp
 | -------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `kubernetes_external_secrets_sync_calls_count`     | Counter | Number of sync operations by backend, secret name and status                                                                            | `kubernetes_external_secrets_sync_calls_count{name="foo",namespace="example",backend="foo",status="success"} 1` |
 | `kubernetes_external_secrets_last_sync_call_state` | Gauge   | State of last sync call of external secret, where -1 means the last sync_call was an error and 1 means the last sync_call was a success | `kubernetes_external_secrets_last_sync_call_state{name="foo",namespace="example",backend="foo"} 1`              |
+| `kubernetes_external_secrets_sqs_messages_received_total` | Counter | Messages received from the event-driven sync SQS queue                                                                    | `kubernetes_external_secrets_sqs_messages_received_total 5`                                                     |
+| `kubernetes_external_secrets_sqs_receive_errors_total` | Counter | Failed SQS ReceiveMessage calls for event-driven sync                                                                        | `kubernetes_external_secrets_sqs_receive_errors_total 1`                                                        |
+| `kubernetes_external_secrets_event_triggered_syncs_total` | Counter | Syncs triggered by Secrets Manager change events, by external secret                                                      | `kubernetes_external_secrets_event_triggered_syncs_total{name="foo",namespace="example"} 1`                     |
+| `kubernetes_external_secrets_sqs_consumer_running` | Gauge   | Whether the event-driven sync SQS consumer loop is running (1) or stopped/dead (0); alert on 0 when the feature is enabled           | `kubernetes_external_secrets_sqs_consumer_running 1`                                                            |
 
 ## Development
 

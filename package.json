@@ -7,7 +7,7 @@
     "coverage": "nyc ./node_modules/mocha/bin/_mocha --recursive lib",
     "lint": "eslint --fix --ignore-pattern /coverage/ ./",
     "local": "LOCALSTACK=1 AWS_ACCESS_KEY_ID=foobar AWS_SECRET_ACCESS_KEY=foobar nodemon",
-    "localstack": "docker run -it -p 4566:4566 -p 9999:8080 -e SERVICES=ssm,secretsmanager,sts -e DEBUG=1 --rm localstack/localstack:latest",
+    "localstack": "docker run -it -p 4566:4566 -p 9999:8080 -e SERVICES=ssm,secretsmanager,sts,sqs -e DEBUG=1 --rm localstack/localstack:4.9",
     "release": "commit-and-tag-version --tag-prefix='' -a",
     "start": "./bin/daemon.js",
     "nodemon": "nodemon ./bin/daemon.js",
@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.1075.0",
+    "@aws-sdk/client-sqs": "^3.1075.0",
     "@aws-sdk/client-ssm": "^3.1075.0",
     "@aws-sdk/credential-providers": "^3.1075.0",
     "@kubernetes/client-node": "^1.4.0",

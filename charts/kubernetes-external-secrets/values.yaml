@@ -21,6 +21,15 @@ env:
   # AWS_STS_ENDPOINT: https://sts-fips.us-east-1.amazonaws.com
   # AWS_SSM_ENDPOINT: http://ssm-fips.us-east-1.amazonaws.com
   # AWS_SM_ENDPOINT: http://secretsmanager-fips.us-east-1.amazonaws.com
+  # AWS_SQS_ENDPOINT: https://sqs-fips.us-east-1.amazonaws.com
+
+  # Event-driven sync (AWS Secrets Manager): long-poll an SQS queue fed by
+  # EventBridge change events and re-sync immediately, keeping the poller as
+  # an infrequent fallback. See examples/aws-eventbridge-sqs-terraform.
+  # Values must be quoted strings; the controller's IRSA role (see
+  # serviceAccount.annotations) needs sqs:ReceiveMessage/DeleteMessage/GetQueueAttributes.
+  # AWS_SQS_QUEUE_URL: "https://sqs.us-west-2.amazonaws.com/123456789012/kes-secrets-events-mycluster"
+  # POLLER_INTERVAL_MILLISECONDS: "3600000"
 
   # Use Azure Environment-oriented KeyVault endpoints
   # AZURE_ENVIRONMENT: AzureUSGovernment

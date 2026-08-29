@@ -13,8 +13,12 @@ const MetricsServer = require('../lib/metrics-server')
 const Metrics = require('../lib/metrics')
 const { getExternalSecretEvents } = require('../lib/external-secret')
 const PollerFactory = require('../lib/poller-factory')
+const SqsConsumer = require('../lib/sqs-consumer')
 
 const {
+  awsConfig,
+  awsSqsQueueUrl,
+  awsSqsWaitTimeSeconds,
   backends,
   kubeClient,
   customResourceManifest,
@@ -81,8 +85,21 @@ async function main () {
     logger
   })
 
+  let sqsConsumer = null
+  if (awsSqsQueueUrl) {
+    sqsConsumer = new SqsConsumer({
+      queueUrl: awsSqsQueueUrl,
+      sqsClient: awsConfig.sqsFactory(),
+      daemon,
+      logger,
+      metrics,
+      waitTimeSeconds: awsSqsWaitTimeSeconds
+    })
+  }
+
   logger.info('starting app')
   daemon.start()
+  if (sqsConsumer) sqsConsumer.start()
   await metricsServer.start()
   logger.info('successfully started app')
 
@@ -92,6 +109,9 @@ async function main () {
     shuttingDown = true
     logger.info('received %s, shutting down gracefully', signal)
     try {
+      // Stop consuming events before pollers are torn down so triggerSync
+      // never races removed pollers.
+      if (sqsConsumer) await sqsConsumer.stop()
       daemon.stop()
       await metricsServer.stop()
       logger.info('shutdown complete')

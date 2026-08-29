@@ -63,3 +63,8 @@ e2e/**/.kubeconfig
 # IDE
 .idea/
 .vscode/
+# Terraform (example modules)
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info

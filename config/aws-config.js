@@ -2,6 +2,7 @@
 
 const { SecretsManager } = require('@aws-sdk/client-secrets-manager')
 const { SSM } = require('@aws-sdk/client-ssm')
+const { SQS } = require('@aws-sdk/client-sqs')
 const { fromTemporaryCredentials } = require('@aws-sdk/credential-providers')
 const { NodeHttpHandler } = require('@smithy/node-http-handler')
 const { ProxyAgent } = require('proxy-agent')
@@ -23,10 +24,14 @@ const intermediateRole = process.env.AWS_INTERMEDIATE_ROLE_ARN || 0
 const stsEndpoint = process.env.AWS_STS_ENDPOINT || 0
 const ssmEndpoint = process.env.AWS_SSM_ENDPOINT || 0
 const smEndpoint = process.env.AWS_SM_ENDPOINT || 0
+const sqsEndpoint = process.env.AWS_SQS_ENDPOINT || 0
 
 let secretsManagerConfig = {}
 let systemManagerConfig = {}
 let stsConfig = {
+  region: process.env.AWS_REGION || 'us-west-2'
+}
+let sqsConfig = {
   region: process.env.AWS_REGION || 'us-west-2'
 }
 
@@ -42,6 +47,10 @@ if (stsEndpoint) {
   stsConfig.endpoint = stsEndpoint
 }
 
+if (sqsEndpoint) {
+  sqsConfig.endpoint = sqsEndpoint
+}
+
 if (localstack) {
   secretsManagerConfig = {
     endpoint: process.env.LOCALSTACK_SM_URL || 'http://localhost:4566',
@@ -53,6 +62,10 @@ if (localstack) {
   }
   stsConfig = {
     endpoint: process.env.LOCALSTACK_STS_URL || 'http://localhost:4566',
+    region: process.env.AWS_REGION || 'us-west-2'
+  }
+  sqsConfig = {
+    endpoint: process.env.LOCALSTACK_SQS_URL || 'http://localhost:4566',
     region: process.env.AWS_REGION || 'us-west-2'
   }
 }
@@ -86,6 +99,12 @@ module.exports = {
       config = merge(clonedeep(opts), systemManagerConfig)
     }
     return new SSM(withRequestHandler(config))
+  },
+  sqsFactory: (opts = {}) => {
+    // Unlike the sm/ssm factories, sqsConfig always applies (it carries the
+    // region default), matching how stsConfig is always used.
+    const config = merge(clonedeep(opts), sqsConfig)
+    return new SQS(withRequestHandler(config))
   },
   assumeRole: (assumeRoleOpts) => {
     return fromTemporaryCredentials({

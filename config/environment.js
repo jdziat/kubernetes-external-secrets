@@ -33,6 +33,16 @@ const logMessageKey = process.env.LOG_MESSAGE_KEY || 'msg'
 
 const pollingDisabled = 'DISABLE_POLLING' in process.env
 
+// Event-driven sync: when set, the controller long-polls this SQS queue for
+// Secrets Manager change events and re-syncs matching ExternalSecrets.
+const awsSqsQueueUrl = process.env.AWS_SQS_QUEUE_URL || ''
+// SQS accepts WaitTimeSeconds 0-20; anything else fails every ReceiveMessage,
+// so clamp rather than pass through.
+const rawSqsWaitTime = Number(process.env.AWS_SQS_WAIT_TIME_SECONDS)
+const awsSqsWaitTimeSeconds = Number.isFinite(rawSqsWaitTime)
+  ? Math.min(Math.max(Math.floor(rawSqsWaitTime), 0), 20)
+  : 20
+
 const rolePermittedAnnotation = process.env.ROLE_PERMITTED_ANNOTATION || 'iam.amazonaws.com/permitted'
 const namingPermittedAnnotation = process.env.NAMING_PERMITTED_ANNOTATION || 'externalsecrets.kubernetes-client.io/permitted-key-name'
 const enforceNamespaceAnnotation = 'ENFORCE_NAMESPACE_ANNOTATIONS' in process.env || false
@@ -61,6 +71,8 @@ module.exports = {
   namingPermittedAnnotation,
   enforceNamespaceAnnotation,
   pollingDisabled,
+  awsSqsQueueUrl,
+  awsSqsWaitTimeSeconds,
   logLevel,
   logBase,
   useHumanReadableLogLevels,
