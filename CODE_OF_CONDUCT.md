@@ -56,8 +56,11 @@ project may be further defined and clarified by project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the GoDaddy OSPO (Open Source Policy Office) at
-oss@godaddy.com. All complaints will be reviewed and investigated and will
+reported by contacting the repository maintainer privately using the contact
+information on their [GitHub profile](https://github.com/jdziat) — do not use
+the public issue tracker for conduct reports, so that reporter and subject
+privacy can be preserved.
+All complaints will be reviewed and investigated and will
 result in a response that is deemed necessary and appropriate to the
 circumstances. The project team is obligated to maintain confidentiality with
 regard to the reporter of an incident. Further details of specific enforcement

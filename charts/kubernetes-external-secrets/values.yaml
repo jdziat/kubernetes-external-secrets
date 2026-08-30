@@ -130,7 +130,7 @@ serviceAccount:
 replicaCount: 1
 
 image:
-  repository: ghcr.io/external-secrets/kubernetes-external-secrets
+  repository: ghcr.io/jdziat/kubernetes-external-secrets
   tag: 8.5.5
   pullPolicy: IfNotPresent
 
