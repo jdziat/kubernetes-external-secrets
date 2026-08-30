@@ -64,7 +64,9 @@ For more details about configuration see the [helm chart docs](charts/kubernetes
 
 ### Install with Terraform
 
-Using the [Helm provider](https://registry.terraform.io/providers/hashicorp/helm/latest), the OCI chart installs directly — no repository registration needed. `values` with `yamlencode` avoids the key-escaping pitfalls of `set` blocks for annotation keys:
+For AWS with event-driven sync, the [Terraform modules in this repo](examples/aws-eventbridge-sqs-terraform) provision everything in one apply — event infrastructure, per-cluster SQS queue and alarms, an IRSA role, and the chart itself.
+
+For a standalone install with the [Helm provider](https://registry.terraform.io/providers/hashicorp/helm/latest), the OCI chart installs directly — no repository registration needed. `values` with `yamlencode` avoids the key-escaping pitfalls of `set` blocks for annotation keys:
 
 ```hcl
 resource "helm_release" "kubernetes_external_secrets" {
@@ -85,8 +87,9 @@ resource "helm_release" "kubernetes_external_secrets" {
     env = {
       AWS_REGION = "us-west-2"
       # Optional: event-driven sync (see docs/event-driven-sync.md);
-      # pairs naturally with the examples/aws-eventbridge-sqs-terraform module.
-      # AWS_SQS_QUEUE_URL            = module.kes_events.queue_urls["mycluster"]
+      # the examples/aws-eventbridge-sqs-terraform modules can wire this
+      # (and the IRSA role and this whole helm_release) up for you.
+      # AWS_SQS_QUEUE_URL            = module.cluster.queue_url
       # POLLER_INTERVAL_MILLISECONDS = "3600000"
     }
   })]

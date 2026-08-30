@@ -1,9 +1,14 @@
-output "queue_urls" {
-  description = "Per-cluster SQS queue URL; set as AWS_SQS_QUEUE_URL on that cluster's controller."
-  value       = { for name in var.cluster_names : name => aws_sqs_queue.cluster[name].url }
+output "queue_url" {
+  description = "The cluster's SQS queue URL."
+  value       = module.cluster.queue_url
 }
 
-output "consumer_policy_arns" {
-  description = "Per-cluster IAM policy ARN to attach to the controller's IRSA role."
-  value       = { for name in var.cluster_names : name => aws_iam_policy.consumer[name].arn }
+output "role_arn" {
+  description = "IRSA role the controller runs as."
+  value       = module.cluster.role_arn
+}
+
+output "sns_topic_arn" {
+  description = "Shared SNS topic for additional cluster subscriptions."
+  value       = module.event_bus.sns_topic_arn
 }

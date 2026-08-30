@@ -115,30 +115,38 @@ env:
 
 ## Setup
 
-### 1. AWS infrastructure
+### 1. Terraform (the batteries-included path)
 
-A ready-made Terraform stack lives in
-[`examples/aws-eventbridge-sqs-terraform`](../examples/aws-eventbridge-sqs-terraform):
-EventBridge rule, SNS topic, one queue + DLQ per cluster (SSE enabled),
-queue-age and DLQ CloudWatch alarms, and one least-privilege IAM policy per
-cluster.
+The Terraform modules in
+[`examples/aws-eventbridge-sqs-terraform`](../examples/aws-eventbridge-sqs-terraform)
+provision the entire stack: the shared event bus (`modules/event-bus`:
+EventBridge rule + SNS topic, optionally narrowed with
+`secret_name_prefixes`), and per cluster (`modules/cluster`) the SQS queue +
+DLQ + CloudWatch alarms, an IRSA role with least-privilege SQS and
+Secrets Manager policies, and the helm chart itself — wired together.
 
 ```hcl
-module "kes_events" {
-  source               = "./examples/aws-eventbridge-sqs-terraform"
-  cluster_names        = ["prod-us-west-2", "staging-us-west-2"]
-  secret_name_prefixes = ["prod/", "staging/"]   # optional but recommended
-  alarm_actions        = [aws_sns_topic.oncall.arn]
+module "event_bus" {
+  source               = "./modules/event-bus"
+  secret_name_prefixes = ["prod/"]   # optional but recommended
+}
+
+module "cluster" {
+  source            = "./modules/cluster"
+  cluster_name      = "prod-us-west-2"
+  sns_topic_arn     = module.event_bus.sns_topic_arn
+  oidc_provider_arn = "arn:aws:iam::111111111111:oidc-provider/..."
+  secret_arns       = ["arn:aws:secretsmanager:us-west-2:111111111111:secret:prod/*"]
+  alarm_actions     = [aws_sns_topic.oncall.arn]
 }
 ```
 
-`secret_name_prefixes` narrows the EventBridge rule with a `detail.name`
-prefix filter — strongly recommended in shared accounts, since without it
-every label change in the account/region fans out to every cluster queue
-(names and ARNs only, never values).
-
-EventBridge rules are regional: repeat the stack in every region whose
-secrets you sync.
+With that in place, steps 2 and 3 below are already done for you — they
+document what the module wires up, for anyone provisioning by other means.
+`secret_name_prefixes` is strongly recommended in shared accounts: without
+it every label change in the account/region fans out to every cluster queue
+(names and ARNs only, never values). EventBridge rules are regional: repeat
+the stack in every region whose secrets you sync.
 
 ### 2. Controller IAM
 
