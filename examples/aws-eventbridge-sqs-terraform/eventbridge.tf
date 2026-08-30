@@ -13,9 +13,14 @@ resource "aws_cloudwatch_event_rule" "secrets_manager_changes" {
   event_pattern = jsonencode({
     source      = ["aws.secretsmanager"]
     detail-type = ["Secret Label Updated"]
-    detail = {
-      labelUpdated = ["AWSCURRENT"]
-    }
+    detail = merge(
+      { labelUpdated = ["AWSCURRENT"] },
+      # Narrowing to your secrets' name prefixes shrinks both the metadata
+      # fan-out and the event volume every cluster has to absorb.
+      length(var.secret_name_prefixes) > 0
+      ? { name = [for p in var.secret_name_prefixes : { prefix = p }] }
+      : {}
+    )
   })
 }
 

@@ -20,6 +20,7 @@ const {
   awsConfig,
   awsSqsQueueUrl,
   awsSqsWaitTimeSeconds,
+  eventSyncMinIntervalMilliseconds,
   backends,
   kubeClient,
   customResourceManifest,
@@ -97,7 +98,8 @@ async function main () {
       daemon,
       logger,
       metrics,
-      waitTimeSeconds: awsSqsWaitTimeSeconds
+      waitTimeSeconds: awsSqsWaitTimeSeconds,
+      minSyncIntervalMilliseconds: eventSyncMinIntervalMilliseconds
     })
   }
 

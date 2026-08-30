@@ -27,7 +27,7 @@ env:
   # EventBridge change events and re-sync immediately, keeping the poller as
   # an infrequent fallback. See examples/aws-eventbridge-sqs-terraform.
   # Values must be quoted strings; the controller's IRSA role (see
-  # serviceAccount.annotations) needs sqs:ReceiveMessage/DeleteMessage/GetQueueAttributes.
+  # serviceAccount.annotations) needs sqs:ReceiveMessage and sqs:DeleteMessage.
   # AWS_SQS_QUEUE_URL: "https://sqs.us-west-2.amazonaws.com/123456789012/kes-secrets-events-mycluster"
   # POLLER_INTERVAL_MILLISECONDS: "3600000"
 

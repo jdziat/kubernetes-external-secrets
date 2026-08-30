@@ -1,5 +1,7 @@
 'use strict'
 
+const { clampSqsWaitTimeSeconds, parseNonNegativeMilliseconds } = require('../lib/utils')
+
 const environment = process.env.NODE_ENV
   ? process.env.NODE_ENV.toLowerCase()
   : 'development'
@@ -36,8 +38,13 @@ const pollingDisabled = 'DISABLE_POLLING' in process.env
 // Event-driven sync: when set, the controller long-polls this SQS queue for
 // Secrets Manager change events and re-syncs matching ExternalSecrets.
 const awsSqsQueueUrl = process.env.AWS_SQS_QUEUE_URL || ''
-const { clampSqsWaitTimeSeconds } = require('../lib/utils')
 const awsSqsWaitTimeSeconds = clampSqsWaitTimeSeconds(process.env.AWS_SQS_WAIT_TIME_SECONDS)
+
+// Minimum interval between event-triggered syncs of the same ExternalSecret;
+// bounds kube/AWS load when the shared account-wide queue is churning.
+// Empty/invalid input keeps the default; an explicit "0" opts out.
+const eventSyncMinIntervalMilliseconds = parseNonNegativeMilliseconds(
+  process.env.EVENT_SYNC_MIN_INTERVAL_MILLISECONDS, 10000)
 
 const rolePermittedAnnotation = process.env.ROLE_PERMITTED_ANNOTATION || 'iam.amazonaws.com/permitted'
 const namingPermittedAnnotation = process.env.NAMING_PERMITTED_ANNOTATION || 'externalsecrets.kubernetes-client.io/permitted-key-name'
@@ -69,6 +76,7 @@ module.exports = {
   pollingDisabled,
   awsSqsQueueUrl,
   awsSqsWaitTimeSeconds,
+  eventSyncMinIntervalMilliseconds,
   logLevel,
   logBase,
   useHumanReadableLogLevels,

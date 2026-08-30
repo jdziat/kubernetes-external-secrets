@@ -1004,8 +1004,9 @@ Enable it by setting `AWS_SQS_QUEUE_URL` on the controller. A ready-made Terrafo
 | Env var                     | Description                                                                | Default |
 | --------------------------- | -------------------------------------------------------------------------- | ------- |
 | `AWS_SQS_QUEUE_URL`         | SQS queue to long-poll for Secrets Manager change events; enables the feature when set | unset |
-| `AWS_SQS_WAIT_TIME_SECONDS` | Long-poll wait time per `ReceiveMessage` call                              | `20`    |
+| `AWS_SQS_WAIT_TIME_SECONDS` | Long-poll wait time per `ReceiveMessage` call (clamped to 1-20)            | `20`    |
 | `AWS_SQS_ENDPOINT`          | Custom SQS endpoint (FIPS / VPC endpoint)                                  | unset   |
+| `EVENT_SYNC_MIN_INTERVAL_MILLISECONDS` | Minimum interval between event-triggered syncs of the same ExternalSecret; bounds load when the shared queue churns | `10000` |
 
 The controller's IAM role (e.g. via IRSA) needs:
 
@@ -1030,12 +1031,13 @@ env:
 
 Notes on matching semantics:
 
-- Events are matched to ExternalSecrets by secret **name** (the ARN's random `-XXXXXX` suffix is handled), ignoring region and account. A same-named secret elsewhere may cause a spurious re-sync; it fetches identical data and writes nothing, so this errs toward freshness.
+- Events are matched to ExternalSecrets by secret **name**, ignoring region and account; ARNs additionally match with their random `-XXXXXX` suffix stripped (plain names are taken literally, so `app/creds-master` never also matches `app/creds`). A same-named secret elsewhere may cause a spurious re-sync; it fetches identical data and writes nothing, so this errs toward freshness.
 - Entries pinned with `versionId` are never event-synced — a change event cannot alter what a pinned version resolves to.
 - Only `secretsManager` backend ExternalSecrets participate; other backends are unaffected.
 - Deleting or restoring a secret publishes no native event; the fallback poller reconciles those changes.
 - With more than one controller replica, SQS splits messages across replicas (each event is delivered to only one). The chart already documents that multiple replicas are unsupported; the fallback poller covers the gap regardless.
-- Alert on `kubernetes_external_secrets_sqs_consumer_running == 0` (and the Terraform example's queue-age alarm): if the consumer loop dies the controller keeps running and the fallback poll silently masks the gap for up to an interval.
+- Alert on `kubernetes_external_secrets_sqs_consumer_running == 0` (and the Terraform example's queue-age alarm): if the consumer loop dies or its receives fail continuously (bad IAM, wrong queue URL/region, blocked proxy — the gauge drops to 0 once backoff maxes out), the controller keeps running and the fallback poll silently masks the gap. Pair it with `rate(kubernetes_external_secrets_sqs_receive_errors_total[10m]) > 0` to catch intermittent failures early.
+- Events for the same ExternalSecret are rate-limited to one sync per `EVENT_SYNC_MIN_INTERVAL_MILLISECONDS` (default 10s); suppressed events are reconciled by the fallback poller.
 
 ## Metrics
 
