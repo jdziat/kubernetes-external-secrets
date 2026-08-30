@@ -1,0 +1,36 @@
+name: publish-chart
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref (tag) to package and publish the chart from
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Package and push chart
+        run: |
+          helm package charts/kubernetes-external-secrets
+          CHART_TGZ=$(ls kubernetes-external-secrets-*.tgz)
+          helm push "$CHART_TGZ" "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/charts"

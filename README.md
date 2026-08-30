@@ -46,7 +46,13 @@ to encrypt `Secrets` stored in `etcd`.
 
 ### Install with Helm
 
-The [helm chart](charts/kubernetes-external-secrets) in this repository can be used to create the `kubernetes-external-secrets` resources and `Deployment` on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+The [helm chart](charts/kubernetes-external-secrets) is published as an OCI artifact to GHCR on every release:
+
+```bash
+$ helm install [RELEASE_NAME] oci://ghcr.io/jdziat/charts/kubernetes-external-secrets --version 8.6.0
+```
+
+Alternatively, install straight from a checkout of this repository:
 
 ```bash
 $ git clone https://github.com/jdziat/kubernetes-external-secrets.git
@@ -54,16 +60,45 @@ $ cd kubernetes-external-secrets
 $ helm install [RELEASE_NAME] ./charts/kubernetes-external-secrets
 ```
 
-See the [chart README](charts/kubernetes-external-secrets/README.md) for a note on image availability before the fork's first tagged release.
-
 For more details about configuration see the [helm chart docs](charts/kubernetes-external-secrets/README.md)
+
+### Install with Terraform
+
+Using the [Helm provider](https://registry.terraform.io/providers/hashicorp/helm/latest), the OCI chart installs directly — no repository registration needed. `values` with `yamlencode` avoids the key-escaping pitfalls of `set` blocks for annotation keys:
+
+```hcl
+resource "helm_release" "kubernetes_external_secrets" {
+  name      = "kubernetes-external-secrets"
+  namespace = "kube-system"
+
+  repository = "oci://ghcr.io/jdziat/charts"
+  chart      = "kubernetes-external-secrets"
+  version    = "8.6.0"
+
+  values = [yamlencode({
+    securityContext = { fsGroup = 65534 } # required for IRSA
+    serviceAccount = {
+      annotations = {
+        "eks.amazonaws.com/role-arn" = "arn:aws:iam::111111111111:role/kubernetes-external-secrets"
+      }
+    }
+    env = {
+      AWS_REGION = "us-west-2"
+      # Optional: event-driven sync (see docs/event-driven-sync.md);
+      # pairs naturally with the examples/aws-eventbridge-sqs-terraform module.
+      # AWS_SQS_QUEUE_URL            = module.kes_events.queue_urls["mycluster"]
+      # POLLER_INTERVAL_MILLISECONDS = "3600000"
+    }
+  })]
+}
+```
 
 ### Install with kubectl
 
 If you don't want to install helm on your cluster and just want to use `kubectl` to install `kubernetes-external-secrets`, you could get the `helm` client cli first and then use the following sample command to generate kubernetes manifests:
 
 ```bash
-$ helm template --include-crds --output-dir ./output_dir ./charts/kubernetes-external-secrets
+$ helm template --include-crds --output-dir ./output_dir oci://ghcr.io/jdziat/charts/kubernetes-external-secrets --version 8.6.0
 ```
 
 The generated kubernetes manifests will be in `./output_dir` and can be applied to deploy `kubernetes-external-secrets` to the cluster.

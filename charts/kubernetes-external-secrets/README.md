@@ -5,12 +5,16 @@
 ## TL;DR;
 
 ```bash
+$ helm install [RELEASE_NAME] oci://ghcr.io/jdziat/charts/kubernetes-external-secrets --version 8.6.0
+```
+
+Or from a checkout of the repository:
+
+```bash
 $ git clone https://github.com/jdziat/kubernetes-external-secrets.git
 $ cd kubernetes-external-secrets
 $ helm install [RELEASE_NAME] ./charts/kubernetes-external-secrets
 ```
-
-> **Note**: the default `image.repository` (`ghcr.io/jdziat/kubernetes-external-secrets`) is published by CI on release tags. Until the first tagged release of this fork exists and its package is public, build and push the image yourself from the repository's `Dockerfile` and set `image.repository`/`image.tag` accordingly.
 
 See below for [Helm V2 considerations](#helm-v2-considerations) when installing the chart.
 
