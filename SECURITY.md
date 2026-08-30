@@ -9,7 +9,8 @@
 ## Reporting security problems
 
 **DO NOT CREATE AN ISSUE** to report a security problem. Instead, please
-send an email to contact@external-secrets.io
+report it privately via
+[GitHub security advisories](https://github.com/jdziat/kubernetes-external-secrets/security/advisories/new)
 
 <a name="vulnerability-management"></a>
 ## Vulnerability Management Plans

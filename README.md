@@ -1,27 +1,24 @@
-# Deprecated
-
-This project has been [deprecated](https://github.com/external-secrets/kubernetes-external-secrets/issues/864). 
-Please take a look at ESO (External Secrets Operator) instead https://github.com/external-secrets/external-secrets 
-
-[![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/external-secrets)](https://artifacthub.io/packages/search?repo=external-secrets) [![LGTM Alerts](https://img.shields.io/lgtm/alerts/github/external-secrets/kubernetes-external-secrets)](https://lgtm.com/projects/g/external-secrets/kubernetes-external-secrets)
-
-## History
-
-This project was moved from the [GoDaddy](https://github.com/godaddy) to the [external-secrets](https://github.com/external-secrets) GitHub organization in an effort to consolidate different projects with the same objective. More information [here](https://github.com/external-secrets/kubernetes-external-secrets/issues/554#issuecomment-728984416).
-
 # Kubernetes External Secrets
 
 Kubernetes External Secrets allows you to use external secret
 management systems, like [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) or
 [HashiCorp Vault](https://www.vaultproject.io/), to securely add secrets in
-Kubernetes. Read more about the design and motivation for Kubernetes
-External Secrets on the [GoDaddy Engineering
-Blog](https://godaddy.github.io/2019/04/16/kubernetes-external-secrets/).
+Kubernetes.
 
-The community and maintainers of this project and related Kubernetes
-secret management projects use the
-[`#external-secrets`](https://kubernetes.slack.com/archives/C017BF84G2Y)
-channel on the Kubernetes slack for discussion and brainstorming.
+This repository is an **actively maintained fork** of the archived
+[external-secrets/kubernetes-external-secrets](https://github.com/external-secrets/kubernetes-external-secrets)
+project, with modernized dependencies, security fixes, and new features such
+as [event-driven sync for AWS Secrets Manager](docs/event-driven-sync.md).
+If you are looking for the CNCF-backed successor project instead, see the
+[External Secrets Operator](https://github.com/external-secrets/external-secrets).
+
+## History
+
+The original project was created at [GoDaddy](https://github.com/godaddy)
+([design blog post](https://godaddy.github.io/2019/04/16/kubernetes-external-secrets/)),
+moved to the [external-secrets](https://github.com/external-secrets)
+organization, and archived there in favor of the External Secrets Operator.
+This fork continues maintenance of the original controller.
 
 ## How it works
 
@@ -49,11 +46,11 @@ to encrypt `Secrets` stored in `etcd`.
 
 ### Install with Helm
 
-The official [helm chart](charts/kubernetes-external-secrets) can be used to create the `kubernetes-external-secrets` resources and `Deployment` on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+The [helm chart](charts/kubernetes-external-secrets) in this repository can be used to create the `kubernetes-external-secrets` resources and `Deployment` on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 ```bash
-$ helm repo add external-secrets https://external-secrets.github.io/kubernetes-external-secrets/
-$ helm install [RELEASE_NAME] external-secrets/kubernetes-external-secrets
+$ git clone https://github.com/jdziat/kubernetes-external-secrets.git
+$ helm install [RELEASE_NAME] ./kubernetes-external-secrets/charts/kubernetes-external-secrets
 ```
 
 For more details about configuration see the [helm chart docs](charts/kubernetes-external-secrets/README.md)
@@ -63,7 +60,7 @@ For more details about configuration see the [helm chart docs](charts/kubernetes
 If you don't want to install helm on your cluster and just want to use `kubectl` to install `kubernetes-external-secrets`, you could get the `helm` client cli first and then use the following sample command to generate kubernetes manifests:
 
 ```bash
-$ helm template --include-crds --output-dir ./output_dir external-secrets/kubernetes-external-secrets
+$ helm template --include-crds --output-dir ./output_dir ./kubernetes-external-secrets/charts/kubernetes-external-secrets
 ```
 
 The generated kubernetes manifests will be in `./output_dir` and can be applied to deploy `kubernetes-external-secrets` to the cluster.

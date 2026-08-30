@@ -1,17 +1,12 @@
-# ⚠️ Deprecated
-
-This project has been [deprecated](https://github.com/external-secrets/kubernetes-external-secrets/issues/864).
-Please take a look at ESO (External Secrets Operator) instead https://github.com/external-secrets/external-secrets
-
 # 💂 Kubernetes External Secrets
 
-[Kubernetes External Secrets](https://github.com/external-secrets/kubernetes-external-secrets) allows you to use external secret management systems (*e.g.*, [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/)) to securely add secrets in Kubernetes. Read more about the design and motivation for Kubernetes External Secrets on the [GoDaddy Engineering Blog](https://godaddy.github.io/2019/04/16/kubernetes-external-secrets/).
+[Kubernetes External Secrets](https://github.com/jdziat/kubernetes-external-secrets) allows you to use external secret management systems (*e.g.*, [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/)) to securely add secrets in Kubernetes. This chart is part of an actively maintained fork of the archived upstream project.
 
 ## TL;DR;
 
 ```bash
-$ helm repo add external-secrets https://external-secrets.github.io/kubernetes-external-secrets/
-$ helm install [RELEASE_NAME] external-secrets/kubernetes-external-secrets
+$ git clone https://github.com/jdziat/kubernetes-external-secrets.git
+$ helm install [RELEASE_NAME] ./kubernetes-external-secrets/charts/kubernetes-external-secrets
 ```
 
 See below for [Helm V2 considerations](#helm-v2-considerations) when installing the chart.
@@ -25,13 +20,13 @@ See below for [Helm V2 considerations](#helm-v2-considerations) when installing 
 To install the chart with the release named `my-release`:
 
 ```bash
-$ helm install my-release external-secrets/kubernetes-external-secrets
+$ helm install my-release ./charts/kubernetes-external-secrets
 ```
 
 To install the chart with [AWS IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html):
 
 ```bash
-$ helm install my-release external-secrets/kubernetes-external-secrets --set securityContext.fsGroup=65534 --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"='arn:aws:iam::111111111111:role/ROLENAME'
+$ helm install my-release ./charts/kubernetes-external-secrets --set securityContext.fsGroup=65534 --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"='arn:aws:iam::111111111111:role/ROLENAME'
 ```
 
 ## Uninstalling the Chart
@@ -80,7 +75,7 @@ The following table lists the configurable parameters of the `kubernetes-externa
 | `envVarsFromSecret.ALICLOUD_ACCESS_KEY_SECRET` | Set ALICLOUD_ACCESS_KEY_SECRET (from a secret) in Deployment Pod                                                             |                                       |
 | `envVarsFromConfigMap.*` | Set any of the environment variables as `envVarsFromSecret` does but from a `configMap` in Deployment Pod                                                             |                                       |
 | `envFrom` | Enables the [`envFrom` block](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables) on the Deployment pod                                                              |                                       |
-| `image.repository`                        | kubernetes-external-secrets Image name                                                                                            | `ghcr.io/external-secrets/kubernetes-external-secrets` |
+| `image.repository`                        | kubernetes-external-secrets Image name                                                                                            | `ghcr.io/jdziat/kubernetes-external-secrets` |
 | `image.tag`                               | kubernetes-external-secrets Image tag                                                                                             | `8.5.5`                               |
 | `image.pullPolicy`                        | Image pull policy                                                                                                                 | `IfNotPresent`                        |
 | `nameOverride`                            | Override the name of app                                                                                                          | `nil`                                 |
@@ -109,7 +104,7 @@ The following table lists the configurable parameters of the `kubernetes-externa
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```bash
-helm install my-release external-secrets/kubernetes-external-secrets \
+helm install my-release ./charts/kubernetes-external-secrets \
 --set env.POLLER_INTERVAL_MILLISECONDS='300000' \
 --set podAnnotations."iam\.amazonaws\.com/role"='Name-Of-IAM-Role-With-SecretManager-Access'
 ```
@@ -117,10 +112,10 @@ helm install my-release external-secrets/kubernetes-external-secrets \
 Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
 
 ```bash
-helm install my-release external-secrets/kubernetes-external-secrets -f values.yaml
+helm install my-release ./charts/kubernetes-external-secrets -f values.yaml
 ```
 
-> **Tip**: You can use the default [values.yaml](https://github.com/external-secrets/kubernetes-external-secrets/blob/master/charts/kubernetes-external-secrets/values.yaml)
+> **Tip**: You can use the default [values.yaml](https://github.com/jdziat/kubernetes-external-secrets/blob/master/charts/kubernetes-external-secrets/values.yaml)
 
 ## Add a secret
 
@@ -170,4 +165,4 @@ data:
 
 ## Further Information
 
-For more in-depth documentation of usage, please see the [Kubernetes External Secrets repo](https://github.com/external-secrets/kubernetes-external-secrets)
+For more in-depth documentation of usage, please see the [Kubernetes External Secrets repo](https://github.com/jdziat/kubernetes-external-secrets)
