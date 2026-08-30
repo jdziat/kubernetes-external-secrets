@@ -13,8 +13,10 @@ permissions:
   packages: write
   id-token: write
 
+# Push with the workflow's own GITHUB_TOKEN (packages: write is granted
+# above); PR builds compile the image but never push.
 env:
-  GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+  DO_PUSH: ${{ github.event_name != 'pull_request' }}
 
 jobs:
   build:
@@ -54,14 +56,14 @@ jobs:
 
       - name: Login to GHCR
         uses: docker/login-action@v3
-        if: env.GHCR_USERNAME != '' && steps.docker_meta.outputs.version != ''
+        if: env.DO_PUSH == 'true' && steps.docker_meta.outputs.version != ''
         with:
           registry: ghcr.io
-          username: ${{ secrets.GHCR_USERNAME }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install cosign
-        if: env.GHCR_USERNAME != '' && steps.docker_meta.outputs.version != ''
+        if: env.DO_PUSH == 'true' && steps.docker_meta.outputs.version != ''
         uses: sigstore/cosign-installer@v3
 
       - name: Build and push
@@ -70,14 +72,14 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: ${{ env.GHCR_USERNAME != '' && steps.docker_meta.outputs.version != '' }}
+          push: ${{ env.DO_PUSH == 'true' && steps.docker_meta.outputs.version != '' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
           provenance: true
           sbom: true
 
       - name: Sign image (keyless)
-        if: env.GHCR_USERNAME != '' && steps.docker_meta.outputs.version != '' && steps.build.outputs.digest != ''
+        if: env.DO_PUSH == 'true' && steps.docker_meta.outputs.version != '' && steps.build.outputs.digest != ''
         env:
           IMAGE: ${{ steps.image_name.outputs.image }}
           DIGEST: ${{ steps.build.outputs.digest }}
