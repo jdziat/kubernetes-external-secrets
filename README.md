@@ -1029,16 +1029,15 @@ env:
   POLLER_INTERVAL_MILLISECONDS: "3600000"  # hourly reconcile; events handle freshness
 ```
 
-Notes on matching semantics:
+The essentials at a glance:
 
-- Events are matched to ExternalSecrets by secret **name**, ignoring region and account; ARNs additionally match with their random `-XXXXXX` suffix stripped (plain names are taken literally, so `app/creds-master` never also matches `app/creds`). A same-named secret elsewhere may cause a spurious re-sync; it fetches identical data and writes nothing, so this errs toward freshness.
-- Entries pinned with `versionId` are never event-synced — a change event cannot alter what a pinned version resolves to.
-- Only `secretsManager` backend ExternalSecrets participate; other backends are unaffected.
-- Deleting or restoring a secret publishes no native event; the fallback poller reconciles those changes.
-- With more than one controller replica, SQS splits messages across replicas (each event is delivered to only one). The chart already documents that multiple replicas are unsupported; the fallback poller covers the gap regardless.
-- Alert on `kubernetes_external_secrets_sqs_consumer_running == 0` (and the Terraform example's queue-age alarm): if the consumer loop dies or its receives fail continuously (bad IAM, wrong queue URL/region, blocked proxy — the gauge drops to 0 once backoff maxes out), the controller keeps running and the fallback poll silently masks the gap. Pair it with `rate(kubernetes_external_secrets_sqs_receive_errors_total[10m]) > 0` to catch intermittent failures early.
-- Events for the same ExternalSecret are rate-limited to one sync per `EVENT_SYNC_MIN_INTERVAL_MILLISECONDS` (default 10s); a suppressed event is deferred to the window's end rather than dropped.
-- After each successful sync `status.observedVersions` records the Secrets Manager `VersionId` each backend key resolved to, so `kubectl get externalsecret <name> -o jsonpath='{.status.observedVersions}'` answers "which secret version is this cluster actually running?" during rotation incidents.
+- Events are hints, never commands: a matching event triggers a normal fetch of `AWSCURRENT` plus a diff, so out-of-order or duplicate delivery is harmless.
+- Matching is by secret **name** (ARNs also match with their random `-XXXXXX` suffix stripped); only `secretsManager` ExternalSecrets participate, and `versionId`-pinned entries are excluded.
+- Event syncs are rate-limited per ExternalSecret (`EVENT_SYNC_MIN_INTERVAL_MILLISECONDS`, default 10s); suppressed events are deferred to the window's end, not dropped.
+- Alert on `kubernetes_external_secrets_sqs_consumer_running == 0` — every failure mode degrades gracefully to fallback polling, which is exactly why it's silent without the alert.
+- After each successful sync, `status.observedVersions` records which Secrets Manager `VersionId` each key resolved to.
+
+The full reference — architecture, setup, configuration, metrics and alerting, failure-mode runbook, design decisions, scale test results, and the rollout checklist (including the one live verification step you should not skip) — lives in [`docs/event-driven-sync.md`](docs/event-driven-sync.md).
 
 ## Metrics
 
