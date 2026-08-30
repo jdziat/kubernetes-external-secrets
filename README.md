@@ -50,8 +50,11 @@ The [helm chart](charts/kubernetes-external-secrets) in this repository can be u
 
 ```bash
 $ git clone https://github.com/jdziat/kubernetes-external-secrets.git
-$ helm install [RELEASE_NAME] ./kubernetes-external-secrets/charts/kubernetes-external-secrets
+$ cd kubernetes-external-secrets
+$ helm install [RELEASE_NAME] ./charts/kubernetes-external-secrets
 ```
+
+See the [chart README](charts/kubernetes-external-secrets/README.md) for a note on image availability before the fork's first tagged release.
 
 For more details about configuration see the [helm chart docs](charts/kubernetes-external-secrets/README.md)
 
@@ -60,7 +63,7 @@ For more details about configuration see the [helm chart docs](charts/kubernetes
 If you don't want to install helm on your cluster and just want to use `kubectl` to install `kubernetes-external-secrets`, you could get the `helm` client cli first and then use the following sample command to generate kubernetes manifests:
 
 ```bash
-$ helm template --include-crds --output-dir ./output_dir ./kubernetes-external-secrets/charts/kubernetes-external-secrets
+$ helm template --include-crds --output-dir ./output_dir ./charts/kubernetes-external-secrets
 ```
 
 The generated kubernetes manifests will be in `./output_dir` and can be applied to deploy `kubernetes-external-secrets` to the cluster.
