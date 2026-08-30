@@ -44,9 +44,19 @@ variable "service_account_name" {
 }
 
 variable "secret_arns" {
-  description = "Secrets Manager secret ARNs the controller may read. Narrow this to your secrets' ARNs or prefix patterns; the default allows all secrets in the account."
+  description = "Secrets Manager secret ARNs (or ARN patterns) the controller may read, e.g. [\"arn:aws:secretsmanager:us-west-2:111111111111:secret:prod/*\"]. Required: pass [\"*\"] explicitly if you really want account-wide read access."
   type        = list(string)
-  default     = ["*"]
+
+  validation {
+    condition     = length(var.secret_arns) > 0
+    error_message = "secret_arns must list at least one secret ARN or pattern."
+  }
+}
+
+variable "kms_key_arns" {
+  description = "Customer-managed KMS key ARNs used to encrypt the secrets in secret_arns; grants kms:Decrypt restricted to use via Secrets Manager. Leave empty when secrets use the AWS-managed key."
+  type        = list(string)
+  default     = []
 }
 
 variable "install_chart" {

@@ -4,7 +4,7 @@ Provisions everything kubernetes-external-secrets event-driven sync needs —
 AWS event infrastructure, per-cluster queues, IRSA roles, and the helm chart
 itself:
 
-```
+```text
 Secrets Manager "Secret Label Updated" event (AWSCURRENT moved)
   → EventBridge rule → SNS topic            [modules/event-bus, one per region]
     → SQS queue + DLQ + alarms              ┐
@@ -32,10 +32,13 @@ Optionally narrowed with `secret_name_prefixes`.
   alarm can auto-resolve once the 1h retention expires the backlog.
 - IRSA role trusted only by the controller's service account
   (`system:serviceaccount:<namespace>:<service_account_name>` via the
-  cluster's OIDC provider), with inline least-privilege policies:
+  cluster's OIDC provider), with inline policies:
   `sqs:ReceiveMessage`/`DeleteMessage` on this queue, and
-  `secretsmanager:GetSecretValue` on `secret_arns` (**narrow this from the
-  all-secrets default**).
+  `secretsmanager:GetSecretValue` on `secret_arns` — **required, no
+  default**; pass explicit ARNs/patterns, or `["*"]` if you knowingly want
+  account-wide read. Secrets encrypted with customer-managed KMS keys also
+  need `kms_key_arns`, which grants `kms:Decrypt` restricted via
+  `kms:ViaService` to Secrets Manager.
 - `helm_release` installing the chart from
   `oci://ghcr.io/jdziat/charts/kubernetes-external-secrets`, wired up with
   the IRSA annotation, `fsGroup: 65534`, `AWS_SQS_QUEUE_URL`, and an hourly

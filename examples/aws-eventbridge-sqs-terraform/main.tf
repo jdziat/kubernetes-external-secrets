@@ -46,6 +46,7 @@ module "cluster" {
   sns_topic_arn     = module.event_bus.sns_topic_arn
   oidc_provider_arn = var.oidc_provider_arn
   secret_arns       = var.secret_arns
+  kms_key_arns      = var.kms_key_arns
   alarm_actions     = var.alarm_actions
   tags              = var.tags
 }

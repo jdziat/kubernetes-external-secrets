@@ -33,6 +33,10 @@ resource "aws_sns_topic_subscription" "cluster" {
   # Deliver the EventBridge event directly, without the SNS envelope. The
   # controller tolerates both, but raw delivery keeps messages smaller.
   raw_message_delivery = true
+
+  # Grant SendMessage before subscribing; deliveries attempted before the
+  # queue policy exists are silently dropped.
+  depends_on = [aws_sqs_queue_policy.cluster]
 }
 
 data "aws_iam_policy_document" "queue_policy" {

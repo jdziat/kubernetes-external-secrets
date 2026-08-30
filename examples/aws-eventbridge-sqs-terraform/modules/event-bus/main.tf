@@ -23,7 +23,13 @@ resource "aws_cloudwatch_event_rule" "secrets_manager_changes" {
 
 resource "aws_sns_topic" "secrets_manager_changes" {
   name = "${var.name_prefix}-topic"
-  tags = var.tags
+  # Optional at-rest encryption. Must be a CUSTOMER-managed key: EventBridge
+  # cannot publish to a topic encrypted with the AWS-managed alias/aws/sns
+  # key (its key policy is not editable), and the key policy must grant
+  # events.amazonaws.com kms:GenerateDataKey* and kms:Decrypt. Events carry
+  # secret names/ARNs only, never values.
+  kms_master_key_id = var.kms_key_arn
+  tags              = var.tags
 }
 
 data "aws_iam_policy_document" "sns_topic_policy" {

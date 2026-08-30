@@ -15,6 +15,12 @@ variable "secret_name_prefixes" {
   default     = []
 }
 
+variable "kms_key_arn" {
+  description = "Customer-managed KMS key ARN to encrypt the SNS topic. Its key policy must grant events.amazonaws.com kms:GenerateDataKey* and kms:Decrypt; the AWS-managed alias/aws/sns key cannot be used with EventBridge. Null leaves the topic unencrypted (events carry secret names/ARNs, never values)."
+  type        = string
+  default     = null
+}
+
 variable "tags" {
   description = "Tags applied to all created resources."
   type        = map(string)

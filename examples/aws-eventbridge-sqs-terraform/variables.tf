@@ -39,9 +39,14 @@ variable "secret_name_prefixes" {
 }
 
 variable "secret_arns" {
-  description = "Secrets Manager ARNs the controller may read; narrow from the all-secrets default."
+  description = "Secrets Manager ARNs (or ARN patterns) the controller may read. Required; pass [\"*\"] explicitly for account-wide access."
   type        = list(string)
-  default     = ["*"]
+}
+
+variable "kms_key_arns" {
+  description = "Customer-managed KMS key ARNs encrypting the secrets, if any."
+  type        = list(string)
+  default     = []
 }
 
 variable "alarm_actions" {

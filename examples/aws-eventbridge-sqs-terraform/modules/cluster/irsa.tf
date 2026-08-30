@@ -61,6 +61,25 @@ data "aws_iam_policy_document" "secrets_read" {
     actions   = ["secretsmanager:GetSecretValue"]
     resources = var.secret_arns
   }
+
+  # Secrets encrypted with a customer-managed KMS key additionally need
+  # kms:Decrypt; ViaService restricts use to decryption through
+  # Secrets Manager only.
+  dynamic "statement" {
+    for_each = length(var.kms_key_arns) > 0 ? [1] : []
+    content {
+      sid       = "AllowSecretsKmsDecrypt"
+      effect    = "Allow"
+      actions   = ["kms:Decrypt"]
+      resources = var.kms_key_arns
+
+      condition {
+        test     = "StringEquals"
+        variable = "kms:ViaService"
+        values   = ["secretsmanager.${data.aws_region.current.name}.amazonaws.com"]
+      }
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "secrets_read" {
