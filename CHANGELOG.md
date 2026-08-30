@@ -2,20 +2,6 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
-
-### Features
-
-* **event-driven sync (AWS Secrets Manager):** opt-in EventBridge → SNS → SQS change notifications replace fast polling. Set `AWS_SQS_QUEUE_URL` to enable; the poller stays as a fallback reconcile loop (recommended `POLLER_INTERVAL_MILLISECONDS: "3600000"`), cutting Secrets Manager read costs by ~99% while improving freshness to seconds. Includes a Terraform example (`examples/aws-eventbridge-sqs-terraform`), per-ExternalSecret rate limiting with trailing-edge deferral, four new Prometheus metrics, CloudWatch queue-age/DLQ alarms, and full docs in `docs/event-driven-sync.md`.
-* **status.observedVersions:** after each successful sync the ExternalSecret status records the Secrets Manager `VersionId` each backend key resolved to.
-
-### Bug Fixes
-
-* **security:** `dataFromWithOptions` keys are now subject to the namespace naming-convention annotation (previously bypassed it). ExternalSecrets using `dataFromWithOptions` with keys that do not match their namespace's `permitted-key-name` annotation previously synced and will now be rejected — audit affected specs before upgrading if you use both features together.
-* **poller:** deleting an ExternalSecret while its poll was in flight could crash the controller via an unhandled rejection from the status update; a 404 on status write is now treated as "the ExternalSecret is gone".
-* **poller:** an event-triggered sync armed during `start()`'s in-flight status read is no longer silently rescheduled to the full poll interval (`_setNextPoll` only ever replaces a pending poll with a sooner one).
-* **build:** `npm run localstack` pinned to `localstack/localstack:4.9` (the `latest` image now requires a Pro license).
-
 ### [8.5.5](https://github.com/external-secrets/kubernetes-external-secrets/compare/8.5.4...8.5.5) (2022-03-23)
 
 
