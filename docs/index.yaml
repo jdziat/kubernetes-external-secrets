@@ -2,6 +2,24 @@ apiVersion: v1
 entries:
   kubernetes-external-secrets:
   - apiVersion: v2
+    appVersion: 8.6.0
+    created: "2026-08-30T08:10:57.600913047-07:00"
+    description: Kubernetes External Secrets CustomResourceDefinition and controller
+    digest: 00fc99caac61e4dc92e810f09945827891de9e204cf1c54dd783b444efd11d77
+    home: https://github.com/jdziat/kubernetes-external-secrets
+    keywords:
+    - kubernetes-external-secrets
+    - secrets
+    maintainers:
+    - name: jdziat
+      url: https://github.com/jdziat
+    name: kubernetes-external-secrets
+    sources:
+    - https://github.com/jdziat/kubernetes-external-secrets
+    urls:
+    - kubernetes-external-secrets-8.6.0.tgz
+    version: 8.6.0
+  - apiVersion: v2
     appVersion: 8.5.5
     created: "2022-03-23T20:40:35.687617313+01:00"
     deprecated: true
@@ -884,4 +902,4 @@ entries:
     urls:
     - kubernetes-external-secrets-1.0.1.tgz
     version: 1.0.1
-generated: "2022-03-23T20:40:35.686651483+01:00"
+generated: "2026-08-30T08:10:57.594535136-07:00"

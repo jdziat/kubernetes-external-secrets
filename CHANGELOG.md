@@ -1,6 +1,23 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+
+## [8.6.0](https://github.com/jdziat/kubernetes-external-secrets/compare/8.5.5...8.6.0) (2026-08-30)
+
+
+### Features
+
+* opt-in event-driven sync for AWS Secrets Manager via EventBridge/SNS/SQS ([64da7a9](https://github.com/jdziat/kubernetes-external-secrets/commit/64da7a90c394ec84d1383386ccff5e312eb13440))
+* report observed backend versions in ExternalSecret status ([9002bb9](https://github.com/jdziat/kubernetes-external-secrets/commit/9002bb910f9b3e0cde5a374916d9508e68eaf89a))
+
+
+### Bug Fixes
+
+* bound event-sync amplification and make degraded consumer visible ([739ca09](https://github.com/jdziat/kubernetes-external-secrets/commit/739ca09a7b0488df7b434a3f941b12c1efffb80b))
+* harden event-driven sync after second adversarial review ([a45ce1a](https://github.com/jdziat/kubernetes-external-secrets/commit/a45ce1a87ba3c48c8384397db33e7b31d5479367))
+* **security:** clear npm audit highs (js-yaml, ip-address, body-parser) ([6934975](https://github.com/jdziat/kubernetes-external-secrets/commit/6934975444fdf1a4986788238eb7c7d81c54e6da))
+* **security:** subject dataFromWithOptions keys to namespace naming conventions ([d746384](https://github.com/jdziat/kubernetes-external-secrets/commit/d746384d432ed51b558a0bb975dc48ef1fa91eac))
+* survive delete-during-poll and defer suppressed event syncs ([54bac45](https://github.com/jdziat/kubernetes-external-secrets/commit/54bac458d1ec576c17c63f3be3d84420f2f77d6b))
 
 ### [8.5.5](https://github.com/external-secrets/kubernetes-external-secrets/compare/8.5.4...8.5.5) (2022-03-23)
 
