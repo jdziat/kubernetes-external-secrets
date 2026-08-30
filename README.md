@@ -1037,7 +1037,8 @@ Notes on matching semantics:
 - Deleting or restoring a secret publishes no native event; the fallback poller reconciles those changes.
 - With more than one controller replica, SQS splits messages across replicas (each event is delivered to only one). The chart already documents that multiple replicas are unsupported; the fallback poller covers the gap regardless.
 - Alert on `kubernetes_external_secrets_sqs_consumer_running == 0` (and the Terraform example's queue-age alarm): if the consumer loop dies or its receives fail continuously (bad IAM, wrong queue URL/region, blocked proxy — the gauge drops to 0 once backoff maxes out), the controller keeps running and the fallback poll silently masks the gap. Pair it with `rate(kubernetes_external_secrets_sqs_receive_errors_total[10m]) > 0` to catch intermittent failures early.
-- Events for the same ExternalSecret are rate-limited to one sync per `EVENT_SYNC_MIN_INTERVAL_MILLISECONDS` (default 10s); suppressed events are reconciled by the fallback poller.
+- Events for the same ExternalSecret are rate-limited to one sync per `EVENT_SYNC_MIN_INTERVAL_MILLISECONDS` (default 10s); a suppressed event is deferred to the window's end rather than dropped.
+- After each successful sync `status.observedVersions` records the Secrets Manager `VersionId` each backend key resolved to, so `kubectl get externalsecret <name> -o jsonpath='{.status.observedVersions}'` answers "which secret version is this cluster actually running?" during rotation incidents.
 
 ## Metrics
 
